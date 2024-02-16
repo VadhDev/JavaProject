@@ -89,39 +89,32 @@ class TaskAllocator {
     public void addTask(String name, String requiredSkill) {
         Task task = new Task(name, requiredSkill);
         tasks.add(task);
+
+        // Assign the task to the first member with matching skill
+        for (TeamMember member : teamMembers) {
+            if (member.getSkill().equals(requiredSkill) && member.hasAvailableTaskSlot()) {
+                member.decrementTaskSlots();
+                member.addTask(task);
+                break;
+            }
+        }
     }
 
-    public void displayAssignedTasks() {
+    public void displayMembers() {
+        System.out.println("Team Members:");
         for (TeamMember member : teamMembers) {
-            System.out.println(member.getName() + " - Skill: " + member.getSkill() + " - Task Slots: " + member.getTaskSlots());
-            System.out.println("Assigned Tasks:");
+            System.out.println("- " + member.getName() + " (Skill: " + member.getSkill() + ", Task Slots: " + member.getTaskSlots() + ")");
             List<Task> memberTasks = member.getTasks();
             if (memberTasks.isEmpty()) {
-                System.out.println("No tasks assigned.");
+                System.out.println("   No tasks assigned.");
             } else {
+                System.out.println("   Assigned Tasks:");
                 for (Task task : memberTasks) {
-                    System.out.println("- " + task.getName());
+                    System.out.println("      - " + task.getName());
                 }
             }
-            System.out.println();
         }
-    }
-
-    public void assignTasks() {
-        for (Task task : tasks) {
-            boolean taskAssigned = false;
-            for (TeamMember member : teamMembers) {
-                if (member.hasAvailableTaskSlot() && member.getSkill().equals(task.getRequiredSkill())) {
-                    member.decrementTaskSlots();
-                    member.addTask(task);
-                    taskAssigned = true;
-                    break;
-                }
-            }
-            if (!taskAssigned) {
-                System.out.println("No available team member for task \"" + task.getName() + "\"");
-            }
-        }
+        System.out.println();
     }
 }
 
@@ -130,31 +123,44 @@ public class App {
         TaskAllocator taskAllocator = new TaskAllocator();
         Scanner scanner = new Scanner(System.in);
 
-        // Add predefined team members
-        taskAllocator.addTeamMember("Vadh", "FrontEnd");
-        taskAllocator.addTeamMember("Nak", "BackEnd");
-        taskAllocator.addTeamMember("Hak", "Sales");
+        boolean running = true;
+        while (running) {
+            System.out.println("Menu:");
+            System.out.println("1. Add Team Member");
+            System.out.println("2. Add Task");
+            System.out.println("3. Display Team Members");
+            System.out.println("4. Exit");
+            System.out.print("Choose an option: ");
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
-        int taskSlots = 3; // Set the number of initial task slots for each member
-
-        // User input for new tasks
-        System.out.print("Enter the number of tasks you want to add: ");
-        int numberOfTasks = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        for (int i = 0; i < numberOfTasks; i++) {
-            System.out.print("Enter name of task " + (i + 1) + ": ");
-            String taskName = scanner.nextLine();
-            System.out.print("Enter required skill for task " + (i + 1) + ": ");
-            String requiredSkill = scanner.nextLine();
-            taskAllocator.addTask(taskName, requiredSkill);
+            switch (option) {
+                case 1:
+                    System.out.print("Enter member name: ");
+                    String memberName = scanner.nextLine();
+                    System.out.print("Enter member skill: ");
+                    String memberSkill = scanner.nextLine();
+                    taskAllocator.addTeamMember(memberName, memberSkill);
+                    System.out.println("Member added.");
+                    break;
+                case 2:
+                    System.out.print("Enter task name: ");
+                    String taskName = scanner.nextLine();
+                    System.out.print("Enter required skill for task: ");
+                    String taskSkill = scanner.nextLine();
+                    taskAllocator.addTask(taskName, taskSkill);
+                    System.out.println("Task added.");
+                    break;
+                case 3:
+                    taskAllocator.displayMembers();
+                    break;
+                case 4:
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid option. Please choose a valid option.");
+            }
         }
-
-        // Assign tasks
-        taskAllocator.assignTasks();
-
-        // Display assigned tasks for each team member
-        taskAllocator.displayAssignedTasks();
 
         scanner.close();
     }
